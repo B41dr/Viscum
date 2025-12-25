@@ -1,0 +1,19 @@
+{
+  "rules": {
+    "correctness": "warn",
+    "suspicious": "warn",
+    "perf": "warn",
+    "style": "warn",
+    "pedantic": "off",
+    "nursery": "off"
+  },
+  "ignore": [
+    "node_modules/**",
+    "dist/**",
+    "build/**",
+    "*.lock",
+    "bun.lock",
+    ".git/**"
+  ]
+}
+

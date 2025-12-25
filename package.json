@@ -1,0 +1,29 @@
+{
+  "name": "Viscum",
+  "version": "0.0.1",
+  "description": "",
+  "type": "module",
+  "scripts": {
+    "s": "./start.sh",
+    "p": "./scripts/performance.sh",
+    "l": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json}\" && oxlint --fix src"
+  },
+  "dependencies": {
+    "@langchain/community": "^1.1.1",
+    "@langchain/core": "^1.1.8",
+    "@langchain/langgraph": "^1.0.7",
+    "@langchain/openai": "^1.2.0",
+    "@spider-cloud/spider-client": "^0.1.82",
+    "cheerio": "^1.1.2",
+    "langchain": "^1.2.3",
+    "winston": "^3.19.0"
+  },
+  "devDependencies": {
+    "@types/cheerio": "^1.0.0",
+    "@types/node": "^20.0.0",
+    "@types/winston": "^2.4.4",
+    "oxlint": "^0.15.0",
+    "prettier": "^3.2.5",
+    "typescript": "^5.0.0"
+  }
+}
