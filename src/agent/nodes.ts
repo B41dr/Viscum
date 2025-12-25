@@ -285,28 +285,34 @@ export function createMainAgentNode(llm: ChatOpenAI) {
     for (let i = 0; i < processedMessages.length; i++) {
       const msg = processedMessages[i];
       allMessages.push(msg);
-      
+
       // 如果这是一个包含 tool_calls 的 AIMessage，检查是否有新创建的 ToolMessage 需要插入
-      if (msg instanceof AIMessage && msg.tool_calls && msg.tool_calls.length > 0) {
+      if (
+        msg instanceof AIMessage &&
+        msg.tool_calls &&
+        msg.tool_calls.length > 0
+      ) {
         // 找到对应的新创建的 ToolMessage
         const correspondingToolMessages = newToolMessages.filter((toolMsg) => {
           if (!toolMsg.tool_call_id) return false;
           const toolCalls = msg.tool_calls || [];
           return toolCalls.some((tc: any) => tc.id === toolMsg.tool_call_id);
         });
-        
+
         // 按 tool_calls 的顺序插入 ToolMessage
         if (correspondingToolMessages.length > 0) {
           // 按照 tool_calls 的顺序排序 ToolMessage
           const sortedToolMessages = msg.tool_calls
             .map((tc: any) => {
-              return correspondingToolMessages.find((tm) => tm.tool_call_id === tc.id);
+              return correspondingToolMessages.find(
+                (tm) => tm.tool_call_id === tc.id
+              );
             })
             .filter((tm) => tm !== undefined) as ToolMessage[];
-          
+
           // 插入 ToolMessage
           allMessages.push(...sortedToolMessages);
-          
+
           // 从 newToolMessages 中移除已插入的 ToolMessage
           sortedToolMessages.forEach((tm) => {
             const index = newToolMessages.indexOf(tm);
@@ -317,7 +323,7 @@ export function createMainAgentNode(llm: ChatOpenAI) {
         }
       }
     }
-    
+
     // 如果还有剩余的 ToolMessage（理论上不应该有），添加到末尾
     if (newToolMessages.length > 0) {
       logger.warn("发现未匹配的 ToolMessage，添加到消息列表末尾", {
