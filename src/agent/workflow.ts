@@ -4,6 +4,8 @@ import { BaseMessage } from "@langchain/core/messages";
 import { replaceReducer, messagesReducer } from "./components/reducers";
 import { ToolCall, ToolResult } from "./components/types";
 import { Node } from "./node";
+import { initEnvironment } from "../environment";
+import { initSkills } from "../skills";
 
 /**
  * Agent 状态定义
@@ -40,6 +42,8 @@ export class AgentWorkflow {
   };
 
   constructor(llm: ChatOpenAI) {
+    initEnvironment();
+    initSkills();
     this.agentNode = new Node(llm);
     this.compiledWorkflow = this.buildWorkflow();
   }

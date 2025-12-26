@@ -4,6 +4,7 @@ export {
   Skill,
   SkillParser,
   SkillRegistry,
+  initSkills,
 } from "./skill";
 export { toolRegistry } from "./tool";
 
