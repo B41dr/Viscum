@@ -155,7 +155,6 @@ export class SkillLoader {
    * 从目录加载一个 Skill
    */
   private static loadSingle(skillDir: string): Skill {
-    console.log("loadSkillFromDirectory", skillDir);
     const skillMdPath = join(skillDir, "skill.md");
 
     if (!existsSync(skillMdPath)) {

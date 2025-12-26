@@ -181,7 +181,7 @@ export class Node {
       typeof response.content === "string"
         ? response.content
         : JSON.stringify(response.content);
-    logger.info("Agent 返回最终响应", {
+    logger.debug("Agent 返回最终响应", {
       responseLength: finalResponseContent.length,
       responsePreview:
         finalResponseContent.length > 100
