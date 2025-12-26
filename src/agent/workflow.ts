@@ -3,7 +3,7 @@ import { ChatOpenAI } from "@langchain/openai";
 import { BaseMessage } from "@langchain/core/messages";
 import { replaceReducer, messagesReducer } from "./components/reducers";
 import { ToolCall, ToolResult } from "./components/types";
-import { AgentNode } from "./agent-node";
+import { Node } from "./node";
 
 /**
  * Agent 状态定义
@@ -31,7 +31,7 @@ export const AgentState = Annotation.Root({
  * 负责管理和协调 Agent 的工作流程
  */
 export class AgentWorkflow {
-  private agentNode: AgentNode;
+  private agentNode: Node;
   private compiledWorkflow: {
     invoke: (
       state: typeof AgentState.State
@@ -40,7 +40,7 @@ export class AgentWorkflow {
   };
 
   constructor(llm: ChatOpenAI) {
-    this.agentNode = new AgentNode(llm);
+    this.agentNode = new Node(llm);
     this.compiledWorkflow = this.buildWorkflow();
   }
 
