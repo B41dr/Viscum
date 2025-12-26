@@ -7,7 +7,7 @@ import {
   HumanMessage,
   BaseMessage,
 } from "@langchain/core/messages";
-import { toolRegistry } from "../skills";
+import { toolRegistry } from "../skills/tool";
 import { logger } from "../utils";
 import { getMainAgentPrompt } from "../environment";
 

@@ -29,7 +29,7 @@ export interface Tool {
 /**
  * Tool 注册器
  */
-export class ToolRegistry {
+class ToolRegistry {
   private tools: Map<string, Tool> = new Map();
 
   /**
