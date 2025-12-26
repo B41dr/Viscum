@@ -21,7 +21,7 @@ function cleanText(text: string): string {
  * 原子能力：执行网络搜索并返回结果
  */
 export class GoogleSearchTool implements Tool {
-  name = "google_search";
+  name = "search";
   description =
     "执行网络搜索（使用 DuckDuckGo 搜索引擎）。当用户询问需要实时信息、当前事件、天气、新闻、最新数据或任何需要搜索的问题时使用。";
 

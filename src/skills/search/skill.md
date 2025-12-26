@@ -1,5 +1,5 @@
 ---
-name: google_search
+name: search
 description: 当用户询问需要实时信息、当前事件、天气、新闻、最新数据或任何需要搜索的问题时，使用此工具在 DuckDuckGo 上搜索相关内容。例如：天气、新闻、最新信息、实时数据等。
 ---
 
@@ -18,7 +18,7 @@ Google 搜索技能允许 Agent 在互联网上搜索实时信息、当前事件
 
 本技能包含以下 Tool：
 
-- **google_search**: 执行网络搜索并返回结果
+- **search**: 执行网络搜索并返回结果
 
 ## 参数
 
