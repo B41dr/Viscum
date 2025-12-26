@@ -1,14 +1,17 @@
-import { ChatOpenAI } from "@langchain/openai";
-import { LogLevel, logger } from "./logger";
+import { ChatOpenAI, type ChatOpenAIFields } from "@langchain/openai";
+import { logger } from "./logger";
 
 export interface AppConfig {
   apiKey: string;
   modelName: string;
-  baseURL?: string;
+  /**
+   * 基础 URL
+   * 默认值：undefined
+   */
+  baseURL: string;
   /**
    * 是否启用流式输出
-   * 启用后，AI 响应会实时流式显示，而不是等待完整响应后一次性显示
-   * 默认值：true（通过环境变量 STREAMING 设置，未设置时使用此默认值）
+   * 默认值：false
    */
   streaming: boolean;
   /**
@@ -41,19 +44,9 @@ export interface AppConfig {
    *   * 生成多样化样本
    *   * 注意：可能产生不连贯或不符合预期的输出
    *
-   * 默认值：0.7（通过环境变量 TEMPERATURE 设置，未设置时使用此默认值）
+   * 默认值：0.7
    */
   temperature: number;
-  /**
-   * 日志级别
-   * - error: 只记录错误
-   * - warn: 记录警告和错误
-   * - info: 记录信息、警告和错误（默认）
-   * - debug: 记录所有级别的日志
-   *
-   * 默认值：info（通过环境变量 LOG_LEVEL 设置，未设置时使用此默认值）
-   */
-  logLevel: LogLevel;
 }
 
 export function loadConfig(): AppConfig {
@@ -62,82 +55,37 @@ export function loadConfig(): AppConfig {
     logger.error("OPENAI_API_KEY 环境变量未设置");
   }
 
-  const logLevel = (process.env.LOG_LEVEL || "info") as LogLevel;
-  const validLogLevels: LogLevel[] = ["error", "warn", "info", "debug"];
-  if (!validLogLevels.includes(logLevel)) {
-    logger.error(
-      `无效的日志级别: ${logLevel}，有效值: ${validLogLevels.join(", ")}`
-    );
+  const modelName = process.env.MODEL_NAME;
+  if (!modelName) {
+    logger.error("MODEL_NAME 环境变量未设置");
   }
 
-  // 解析流式输出配置，默认为 true
-  const streamingEnv = process.env.STREAMING;
-  const streaming =
-    streamingEnv === undefined
-      ? true
-      : streamingEnv.toLowerCase() === "true" || streamingEnv === "1";
+  const baseURL = process.env.OPENAI_BASE_URL;
+  if (!baseURL) {
+    logger.error("OPENAI_BASE_URL 环境变量未设置");
+  }
 
   return {
-    // logger.error 会抛出错误，所以 apiKey 不会是 undefined
     apiKey: apiKey!,
-    modelName: process.env.MODEL_NAME || "qwen-flash",
-    baseURL: process.env.OPENAI_BASE_URL,
+    modelName: modelName!,
+    baseURL: baseURL!,
     temperature: parseFloat(process.env.TEMPERATURE || "0.7"),
-    streaming,
-    logLevel,
+    streaming: process.env.STREAMING === "true",
   };
 }
 
-/**
- * 验证配置
- */
-export function validateConfig(config: AppConfig): void {
-  if (!config.apiKey) {
-    logger.error("API Key 不能为空");
-  }
-  if (!config.modelName) {
-    logger.error("模型名称不能为空");
-  }
-}
+export function createLLMClient(config?: AppConfig): ChatOpenAI {
+  const appConfig = config || loadConfig();
 
-/**
- * 创建 LLM 客户端
- */
-export function createLLMClient(config: AppConfig): ChatOpenAI {
-  const llmConfig: any = {
-    modelName: config.modelName,
-    temperature: config.temperature,
-    openAIApiKey: config.apiKey,
-    streaming: config.streaming,
+  const llmConfig: ChatOpenAIFields = {
+    modelName: appConfig.modelName,
+    temperature: appConfig.temperature,
+    openAIApiKey: appConfig.apiKey,
+    streaming: appConfig.streaming,
+    configuration: {
+      baseURL: appConfig.baseURL,
+    },
   };
-
-  if (config.baseURL) {
-    llmConfig.configuration = {
-      baseURL: config.baseURL,
-    };
-  }
 
   return new ChatOpenAI(llmConfig);
-}
-
-/**
- * 格式化错误信息
- */
-export function formatError(error: unknown): string {
-  if (error instanceof Error) {
-    return error.message;
-  }
-  return String(error);
-}
-
-/**
- * 判断是否为配置错误
- */
-export function isConfigError(error: unknown): boolean {
-  if (error instanceof Error) {
-    return (
-      error.message.includes("API Key") || error.message.includes("环境变量")
-    );
-  }
-  return false;
 }

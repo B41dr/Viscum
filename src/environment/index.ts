@@ -7,7 +7,7 @@ import { logger } from "../utils";
  * @param filename prompt 文件名（不含扩展名）
  * @returns prompt 内容
  */
-export function loadPrompt(filename: string): string {
+export function loadPrompt(filename: string) {
   const promptPath = join(__dirname, `${filename}.md`);
   try {
     const content = readFileSync(promptPath, "utf-8");
@@ -17,6 +17,6 @@ export function loadPrompt(filename: string): string {
   }
 }
 
-export function getMainAgentPrompt(): string {
+export function getMainAgentPrompt() {
   return loadPrompt("system");
 }

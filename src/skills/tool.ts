@@ -82,7 +82,4 @@ class ToolRegistry {
   }
 }
 
-/**
- * 全局 Tool 注册器实例
- */
 export const toolRegistry = new ToolRegistry();
