@@ -7,13 +7,33 @@ import { logger } from "../utils";
  * 负责管理环境变量、系统提示词和其他共享上下文
  */
 export class Environment {
+  private static instance: Environment | null = null;
+
   private promptCache: Map<string, string> = new Map();
   private contextData: Map<string, any> = new Map();
   private promptDir: string;
 
-  constructor(promptDir?: string) {
+  private constructor(promptDir?: string) {
     // 默认使用当前目录作为 prompt 文件目录
     this.promptDir = promptDir || __dirname;
+  }
+
+  /**
+   * 初始化环境实例
+   * @param promptDir prompt 文件目录（可选）
+   */
+  static init(promptDir?: string): void {
+    Environment.instance = new Environment(promptDir);
+  }
+
+  /**
+   * 获取环境实例
+   */
+  static getInstance(): Environment {
+    if (!Environment.instance) {
+      Environment.instance = new Environment();
+    }
+    return Environment.instance;
   }
 
   /**
@@ -107,4 +127,12 @@ export class Environment {
   getContextKeys(): string[] {
     return Array.from(this.contextData.keys());
   }
+}
+
+/**
+ * 初始化环境配置
+ * @param promptDir prompt 文件目录（可选）
+ */
+export function initEnvironment(promptDir?: string): void {
+  Environment.init(promptDir);
 }

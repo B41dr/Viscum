@@ -11,8 +11,7 @@ import { toolRegistry } from "../skills/tool";
 import { logger } from "../utils";
 import { Environment } from "../environment";
 
-// 创建环境实例
-const environment = new Environment();
+const environment = Environment.getInstance();
 
 /**
  * 格式化消息列表为可读的字符串
@@ -428,6 +427,19 @@ export function createMainAgentNode(llm: ChatOpenAI) {
     }
 
     // 没有工具调用，返回最终响应
+    // 记录最终响应到日志
+    const finalResponseContent =
+      typeof response.content === "string"
+        ? response.content
+        : JSON.stringify(response.content);
+    logger.info("Agent 返回最终响应", {
+      responseLength: finalResponseContent.length,
+      responsePreview:
+        finalResponseContent.length > 100
+          ? finalResponseContent.substring(0, 100) + "..."
+          : finalResponseContent,
+    });
+
     // 如果有新创建的 ToolMessage，需要一起返回，确保它们被保存到 state 中
     const messagesToReturn =
       newToolMessages.length > 0 ? [...newToolMessages, response] : [response];

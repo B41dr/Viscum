@@ -1,11 +1,15 @@
 import { createLLMClient, initLogger, logger, initSkills } from "./utils";
 import { createAgentWorkflow } from "./agent";
 import { ChatManager } from "./cli";
+import { initEnvironment } from "./environment";
 
 function main() {
   try {
     // 初始化日志
     initLogger();
+
+    // 初始化环境配置
+    initEnvironment();
 
     // 创建 LLM 客户端
     const llm = createLLMClient();
