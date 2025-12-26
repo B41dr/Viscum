@@ -9,7 +9,10 @@ import {
 } from "@langchain/core/messages";
 import { toolRegistry } from "../skills/tool";
 import { logger } from "../utils";
-import { getMainAgentPrompt } from "../environment";
+import { Environment } from "../environment";
+
+// 创建环境实例
+const environment = new Environment();
 
 /**
  * 格式化消息列表为可读的字符串
@@ -96,8 +99,10 @@ export function createMainAgentNode(llm: ChatOpenAI) {
 
     // 如果没有 system message，添加一个来提示 LLM 使用工具
     if (!hasSystemMessage) {
-      const systemPrompt = getMainAgentPrompt();
-      allMessages.push(new SystemMessage(systemPrompt));
+      const systemPrompt = environment.getMainAgentPrompt();
+      if (systemPrompt) {
+        allMessages.push(new SystemMessage(systemPrompt));
+      }
     }
 
     // 先处理 toolResults，创建 ToolMessage

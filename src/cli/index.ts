@@ -1,2 +1,2 @@
-export { createChatInterface, askQuestion, isExitCommand } from "./interface";
+export { CLIInterface } from "./interface";
 export { ChatManager } from "./chat";

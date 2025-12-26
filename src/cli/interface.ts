@@ -1,33 +1,49 @@
 import { createInterface, Interface } from "readline";
 
 /**
- * 创建交互式对话界面
+ * CLI 终端交互接口类
+ * 负责管理终端输入输出和用户交互
  */
-export function createChatInterface(): Interface {
-  return createInterface({
-    input: process.stdin,
-    output: process.stdout,
-  });
-}
+export class CLIInterface {
+  private rl: Interface;
 
-/**
- * 询问用户输入
- */
-export function askQuestion(
-  rl: Interface,
-  prompt: string = "你: "
-): Promise<string> {
-  return new Promise((resolve) => {
-    rl.question(prompt, (answer) => {
-      resolve(answer.trim());
+  constructor() {
+    this.rl = createInterface({
+      input: process.stdin,
+      output: process.stdout,
     });
-  });
-}
+  }
 
-/**
- * 检查是否为退出命令
- */
-export function isExitCommand(input: string): boolean {
-  const normalized = input.toLowerCase();
-  return normalized === "exit" || normalized === "quit" || normalized === "q";
+  /**
+   * 询问用户输入
+   */
+  async askQuestion(prompt: string = "你: "): Promise<string> {
+    return new Promise((resolve) => {
+      this.rl.question(prompt, (answer) => {
+        resolve(answer.trim());
+      });
+    });
+  }
+
+  /**
+   * 显示消息到终端
+   */
+  displayMessage(message: string): void {
+    console.log(message);
+  }
+
+  /**
+   * 检查是否为退出命令
+   */
+  isExitCommand(input: string): boolean {
+    const normalized = input.toLowerCase();
+    return normalized === "exit" || normalized === "quit" || normalized === "q";
+  }
+
+  /**
+   * 关闭接口
+   */
+  close(): void {
+    this.rl.close();
+  }
 }
