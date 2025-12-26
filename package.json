@@ -13,7 +13,6 @@
     "@langchain/core": "^1.1.8",
     "@langchain/langgraph": "^1.0.7",
     "@langchain/openai": "^1.2.0",
-    "@spider-cloud/spider-client": "^0.1.82",
     "cheerio": "^1.1.2",
     "langchain": "^1.2.3",
     "winston": "^3.19.0"

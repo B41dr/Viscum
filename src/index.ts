@@ -1,5 +1,5 @@
 import { createLLMClient, initLogger, logger, initSkills } from "./utils";
-import { createAgentWorkflow } from "./agent";
+import { AgentWorkflow } from "./agent";
 import { ChatManager } from "./cli";
 import { initEnvironment } from "./environment";
 
@@ -15,7 +15,7 @@ function main() {
     const llm = createLLMClient();
 
     // 创建 Agent 工作流
-    const app = createAgentWorkflow(llm);
+    const app = new AgentWorkflow(llm);
 
     // 初始化 Skills
     initSkills();

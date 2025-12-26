@@ -1,33 +1,88 @@
-import { StateGraph, END, START } from "@langchain/langgraph";
-import { AgentState } from "./state";
-import {
-  createMainAgentNode,
-  createSubAgentNode,
-  shouldContinue,
-} from "./nodes";
+import { StateGraph, END, START, Annotation } from "@langchain/langgraph";
 import { ChatOpenAI } from "@langchain/openai";
+import { BaseMessage } from "@langchain/core/messages";
+import { replaceReducer, messagesReducer } from "./components/reducers";
+import { ToolCall, ToolResult } from "./components/types";
+import { AgentNode } from "./agent-node";
 
 /**
- * 创建 Agent 工作流（主子 Agent 架构）
+ * Agent 状态定义
+ * 使用 LangGraph 的 Annotation API 定义状态结构和 reducer
  */
-export function createAgentWorkflow(llm: ChatOpenAI) {
-  // 创建主 Agent 节点（协调和决策）
-  const mainAgentNode = createMainAgentNode(llm);
+export const AgentState = Annotation.Root({
+  messages: Annotation<BaseMessage[]>({
+    reducer: messagesReducer,
+    default: () => [],
+  }),
+  /** 需要执行的工具调用 */
+  toolCalls: Annotation<ToolCall[]>({
+    reducer: replaceReducer,
+    default: () => [],
+  }),
+  /** 工具执行结果 */
+  toolResults: Annotation<ToolResult[]>({
+    reducer: replaceReducer,
+    default: () => [],
+  }),
+});
 
-  // 创建子 Agent 节点（执行工具/Skill）
-  const subAgentNode = createSubAgentNode();
+/**
+ * Agent 工作流
+ * 负责管理和协调 Agent 的工作流程
+ */
+export class AgentWorkflow {
+  private agentNode: AgentNode;
+  private compiledWorkflow: {
+    invoke: (
+      state: typeof AgentState.State
+    ) => Promise<typeof AgentState.State>;
+    stream: (state: typeof AgentState.State) => any;
+  };
 
-  // 创建工作流图
-  const workflow = new StateGraph(AgentState)
-    .addNode("mainAgent", mainAgentNode)
-    .addNode("subAgent", subAgentNode)
-    .addEdge(START, "mainAgent" as any)
-    .addConditionalEdges("mainAgent" as any, shouldContinue, {
-      subAgent: "subAgent" as any,
-      END: END,
-    })
-    .addEdge("subAgent" as any, "mainAgent" as any);
+  constructor(llm: ChatOpenAI) {
+    this.agentNode = new AgentNode(llm);
+    this.compiledWorkflow = this.buildWorkflow();
+  }
 
-  // 编译工作流
-  return workflow.compile();
+  /**
+   * 构建工作流图
+   * 简化后的工作流：Agent 循环执行，直到没有工具调用
+   */
+  private buildWorkflow() {
+    const workflow = new StateGraph(AgentState)
+      .addNode("agent", this.agentNode.getNodeFunction())
+      .addEdge(START, "agent" as any)
+      .addConditionalEdges(
+        "agent" as any,
+        (state: typeof AgentState.State) => {
+          // 如果有工具结果需要处理，继续循环让 LLM 处理结果；否则结束
+          if (state.toolResults && state.toolResults.length > 0) {
+            return "continue";
+          }
+          return "end";
+        },
+        {
+          continue: "agent" as any,
+          end: END,
+        }
+      );
+
+    return workflow.compile() as any;
+  }
+
+  /**
+   * 调用工作流
+   */
+  async invoke(
+    state: typeof AgentState.State
+  ): Promise<typeof AgentState.State> {
+    return await this.compiledWorkflow.invoke(state);
+  }
+
+  /**
+   * 流式调用工作流
+   */
+  async stream(state: typeof AgentState.State) {
+    return await this.compiledWorkflow.stream(state);
+  }
 }

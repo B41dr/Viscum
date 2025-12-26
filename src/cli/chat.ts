@@ -1,5 +1,5 @@
 import { HumanMessage, AIMessage } from "@langchain/core/messages";
-import { AgentState, createAgentWorkflow } from "../agent";
+import { AgentState, AgentWorkflow } from "../agent";
 import { CLIInterface } from "./interface";
 import { logger } from "../utils";
 
@@ -8,16 +8,15 @@ import { logger } from "../utils";
  * 负责管理对话流程和展示 AI 响应
  */
 export class ChatManager {
-  private app: ReturnType<typeof createAgentWorkflow>;
+  private app: AgentWorkflow;
   private cli: CLIInterface;
   private conversationState: typeof AgentState.State;
 
-  constructor(app: ReturnType<typeof createAgentWorkflow>) {
+  constructor(app: AgentWorkflow) {
     this.app = app;
     this.cli = new CLIInterface();
     this.conversationState = {
       messages: [],
-      agentType: "main",
       toolCalls: [],
       toolResults: [],
     };
@@ -42,7 +41,6 @@ export class ChatManager {
           ...this.conversationState.messages,
           new HumanMessage(userInput),
         ],
-        agentType: this.conversationState.agentType || "main",
         toolCalls: [],
         toolResults: [],
       };

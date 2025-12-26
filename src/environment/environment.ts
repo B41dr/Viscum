@@ -59,9 +59,9 @@ export class Environment {
   }
 
   /**
-   * 获取主 Agent 的系统提示词
+   * 获取 Agent 的系统提示词
    */
-  getMainAgentPrompt(): string | undefined {
+  getAgentPrompt(): string | undefined {
     return this.loadPrompt("system");
   }
 
