@@ -290,7 +290,6 @@ export class ChatManager {
             }
           : { error: String(error) };
       logger.error("处理用户输入时出错", errorDetails);
-      throw error;
     }
   }
 

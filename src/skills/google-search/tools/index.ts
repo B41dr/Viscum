@@ -1,5 +1,5 @@
-import { Skill } from "../base";
-import { logger } from "../../utils";
+import { Tool } from "../../tool";
+import { logger } from "../../../utils";
 import * as cheerio from "cheerio";
 
 /**
@@ -17,12 +17,13 @@ function cleanText(text: string): string {
 }
 
 /**
- * Google 搜索 Skill（使用 DuckDuckGo 作为搜索引擎）
+ * Google 搜索 Tool（使用 DuckDuckGo 作为搜索引擎）
+ * 原子能力：执行网络搜索并返回结果
  */
-export class GoogleSearchSkill implements Skill {
+export class GoogleSearchTool implements Tool {
   name = "google_search";
   description =
-    "当用户询问需要实时信息、当前事件、天气、新闻、最新数据或任何需要搜索的问题时，使用此工具在 DuckDuckGo 上搜索相关内容。例如：天气、新闻、最新信息、实时数据等。";
+    "执行网络搜索（使用 DuckDuckGo 搜索引擎）。当用户询问需要实时信息、当前事件、天气、新闻、最新数据或任何需要搜索的问题时使用。";
 
   parameters = {
     type: "object" as const,
@@ -39,7 +40,7 @@ export class GoogleSearchSkill implements Skill {
     const { query } = params;
 
     if (!query || typeof query !== "string") {
-      throw new Error("搜索关键词不能为空");
+      logger.error("搜索关键词不能为空");
     }
 
     logger.info("执行搜索", { query, engine: "DuckDuckGo" });
@@ -60,7 +61,7 @@ export class GoogleSearchSkill implements Skill {
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP 错误: ${response.status} ${response.statusText}`);
+        logger.error(`HTTP 错误: ${response.status} ${response.statusText}`);
       }
 
       const html = await response.text();
@@ -252,9 +253,9 @@ export class GoogleSearchSkill implements Skill {
       };
     } catch (error) {
       logger.error("Google 搜索失败", { error, query });
-      throw new Error(
-        `搜索失败: ${error instanceof Error ? error.message : String(error)}`
-      );
     }
   }
 }
+
+export const googleSearchTool = new GoogleSearchTool();
+export default [googleSearchTool];

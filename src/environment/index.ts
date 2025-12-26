@@ -1,5 +1,6 @@
 import { readFileSync } from "fs";
 import { join } from "path";
+import { logger } from "../utils";
 
 /**
  * 读取 prompt 文件内容
@@ -12,7 +13,7 @@ export function loadPrompt(filename: string): string {
     const content = readFileSync(promptPath, "utf-8");
     return content.trim();
   } catch (error) {
-    throw new Error(`无法读取 prompt 文件: ${filename}.md - ${error}`);
+    logger.error(`无法读取 prompt 文件: ${filename}.md`, { error });
   }
 }
 

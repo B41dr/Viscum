@@ -7,7 +7,7 @@ import {
   HumanMessage,
   BaseMessage,
 } from "@langchain/core/messages";
-import { skillRegistry } from "../skills";
+import { toolRegistry } from "../skills";
 import { logger } from "../utils";
 import { getMainAgentPrompt } from "../environment";
 
@@ -231,9 +231,6 @@ export function createMainAgentNode(llm: ChatOpenAI) {
               messageIndex: i,
               missingToolCallIds: missingIds,
             });
-            throw new Error(
-              `工作流状态不一致：发现包含未完成 tool_calls 的 AIMessage（索引 ${i}），但没有待处理的工具结果。缺失的 tool_call_ids: ${missingIds.join(", ")}`
-            );
           }
         }
         continue;
@@ -272,10 +269,6 @@ export function createMainAgentNode(llm: ChatOpenAI) {
             (v) => v.toolCall.name
           ),
         });
-        // 抛出错误，而不是创建占位消息
-        throw new Error(
-          `工作流异常：发现 ${pendingIds.length} 个未完成的工具调用。工作流应该确保所有工具调用都完成。`
-        );
       }
       // 如果有待处理的 toolResults 或 toolCalls，继续正常流程
     }
@@ -371,9 +364,6 @@ export function createMainAgentNode(llm: ChatOpenAI) {
           missingToolCallIds: missingToolMessages,
           hasPendingToolCalls,
         });
-        throw new Error(
-          `无法发送消息给 LLM：发现 ${missingToolMessages.length} 个未完成的工具调用（${missingToolMessages.join(", ")}）。每个包含 tool_calls 的 AIMessage 都必须有对应的 ToolMessage。`
-        );
       }
 
       // 如果有 toolResults，但仍有未完成的 tool_calls，说明 toolResults 和 tool_calls 不匹配
@@ -383,13 +373,10 @@ export function createMainAgentNode(llm: ChatOpenAI) {
         toolResultsCount: state.toolResults?.length || 0,
         toolCallsCount: state.toolCalls?.length || 0,
       });
-      throw new Error(
-        `无法发送消息给 LLM：发现 ${missingToolMessages.length} 个未完成的工具调用，即使有 toolResults。这可能是工作流状态不一致的问题。`
-      );
     }
 
-    // 绑定工具到 LLM
-    const tools = skillRegistry.getToolDefinitions();
+    // 绑定工具到 LLM（使用 Tool 注册器）
+    const tools = toolRegistry.getToolDefinitions();
     logger.info("可用工具列表", {
       toolCount: tools.length,
       tools: tools.map((t) => ({
@@ -463,20 +450,21 @@ export function createSubAgentNode() {
     // 执行所有工具调用
     for (const toolCall of toolCalls) {
       try {
-        const skill = skillRegistry.get(toolCall.name);
-        if (!skill) {
-          throw new Error(`未找到 Skill: ${toolCall.name}`);
+        const tool = toolRegistry.get(toolCall.name);
+        if (!tool) {
+          logger.error(`未找到 Tool: ${toolCall.name}`);
         }
 
-        logger.info(`执行 Skill: ${toolCall.name}`, { args: toolCall.args });
-        const result = await skill.execute(toolCall.args);
+        // logger.error 会抛出错误，所以 tool 不会是 undefined
+        logger.info(`执行 Tool: ${toolCall.name}`, { args: toolCall.args });
+        const result = await tool!.execute(toolCall.args);
 
         toolResults.push({
           name: toolCall.name,
           result,
         });
       } catch (error) {
-        logger.error(`执行 Skill 失败: ${toolCall.name}`, { error });
+        logger.error(`执行 Tool 失败: ${toolCall.name}`, { error });
         toolResults.push({
           name: toolCall.name,
           result: {

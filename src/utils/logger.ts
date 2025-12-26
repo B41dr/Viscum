@@ -137,9 +137,36 @@ export function getLogger(): winston.Logger {
   return defaultLogger;
 }
 
+function buildErrorMessage(message: string, ...meta: any[]): string {
+  // 合并所有 meta 参数到一个对象中
+  const metaObj: any = {};
+
+  for (const item of meta) {
+    if (item instanceof Error) {
+      // 如果是 Error 对象，提取其 message 和 stack
+      metaObj.error = item.message;
+      if (item.stack) {
+        metaObj.stack = item.stack;
+      }
+    } else if (item && typeof item === "object") {
+      // 如果是普通对象，合并到 metaObj
+      Object.assign(metaObj, item);
+    } else if (item !== null && item !== undefined) {
+      // 其他类型的值，作为额外信息
+      metaObj.extra = item;
+    }
+  }
+
+  const metaStr = formatMeta(metaObj);
+  return `${message}${metaStr}`;
+}
+
 export const logger = {
-  error: (message: string, ...meta: any[]) =>
-    getLogger().error(message, ...meta),
+  error: (message: string, ...meta: any[]): never => {
+    getLogger().error(message, ...meta);
+    const errorMessage = buildErrorMessage(message, ...meta);
+    throw new Error(errorMessage);
+  },
   warn: (message: string, ...meta: any[]) => getLogger().warn(message, ...meta),
   info: (message: string, ...meta: any[]) => getLogger().info(message, ...meta),
   debug: (message: string, ...meta: any[]) =>

@@ -1,5 +1,5 @@
 import { ChatOpenAI } from "@langchain/openai";
-import { LogLevel } from "./logger";
+import { LogLevel, logger } from "./logger";
 
 export interface AppConfig {
   apiKey: string;
@@ -59,13 +59,13 @@ export interface AppConfig {
 export function loadConfig(): AppConfig {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
-    throw new Error("OPENAI_API_KEY 环境变量未设置");
+    logger.error("OPENAI_API_KEY 环境变量未设置");
   }
 
   const logLevel = (process.env.LOG_LEVEL || "info") as LogLevel;
   const validLogLevels: LogLevel[] = ["error", "warn", "info", "debug"];
   if (!validLogLevels.includes(logLevel)) {
-    throw new Error(
+    logger.error(
       `无效的日志级别: ${logLevel}，有效值: ${validLogLevels.join(", ")}`
     );
   }
@@ -78,7 +78,8 @@ export function loadConfig(): AppConfig {
       : streamingEnv.toLowerCase() === "true" || streamingEnv === "1";
 
   return {
-    apiKey,
+    // logger.error 会抛出错误，所以 apiKey 不会是 undefined
+    apiKey: apiKey!,
     modelName: process.env.MODEL_NAME || "qwen-flash",
     baseURL: process.env.OPENAI_BASE_URL,
     temperature: parseFloat(process.env.TEMPERATURE || "0.7"),
@@ -92,10 +93,10 @@ export function loadConfig(): AppConfig {
  */
 export function validateConfig(config: AppConfig): void {
   if (!config.apiKey) {
-    throw new Error("API Key 不能为空");
+    logger.error("API Key 不能为空");
   }
   if (!config.modelName) {
-    throw new Error("模型名称不能为空");
+    logger.error("模型名称不能为空");
   }
 }
 
