@@ -1,0 +1,8 @@
+transformers>=4.40.0
+torch>=2.0.0
+sentencepiece>=0.1.99
+huggingface-hub>=0.20.0
+fastapi>=0.104.0
+uvicorn>=0.24.0
+pydantic>=2.0.0
+urllib3<2.0.0
