@@ -29,7 +29,7 @@ tell application "iTerm2"
 
         # 在左侧面板启动应用
         tell first session of current tab
-            write text "cd '$SCRIPT_DIR' && bun run src/index.ts"
+            write text "cd '$SCRIPT_DIR' && bun run --filter @viscum/cli dev"
         end tell
     end tell
 end tell
