@@ -2,8 +2,14 @@ import { Chat } from "@/components/chat";
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen bg-background">
-      <main className="flex-1">
+    <div
+      style={{
+        minHeight: "100vh",
+        display: "flex",
+        backgroundColor: "#fafafa",
+      }}
+    >
+      <main style={{ flex: 1, width: "100%" }}>
         <Chat />
       </main>
     </div>

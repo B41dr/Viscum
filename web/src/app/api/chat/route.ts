@@ -1,40 +1,92 @@
-import { NextRequest, NextResponse } from "next/server";
-
-const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:3001";
+import { NextRequest } from "next/server";
+import { fetchStream, buildChatRequest } from "@/lib/chat.service";
+import { CHAT_CONFIG } from "@/lib/config";
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { message } = body;
+    const { messages } = body;
 
-    if (!message || typeof message !== "string") {
-      return NextResponse.json({ error: "消息内容不能为空" }, { status: 400 });
+    console.log("收到请求:", { messages });
+
+    // 支持两种格式：单个 message 或 messages 数组
+    let chatMessages: any[] = [];
+
+    if (messages && Array.isArray(messages)) {
+      chatMessages = messages;
     }
 
-    // 调用后端服务
-    const response = await fetch(`${BACKEND_URL}/api/chat`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
+    // 构建请求参数
+    const requestParams = buildChatRequest(chatMessages);
+
+    console.log("发送请求到:", CHAT_CONFIG.baseUrl);
+    console.log("请求参数:", JSON.stringify(requestParams, null, 2));
+
+    // 创建流式响应
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({
+      async start(controller) {
+        try {
+          console.log("开始流式请求...");
+          await fetchStream({
+            url: CHAT_CONFIG.baseUrl,
+            params: requestParams,
+            headers: {
+              Authorization: `Bearer ${CHAT_CONFIG.apiKey}`,
+            },
+            onChunk: (content) => {
+              const data = JSON.stringify({
+                choices: [
+                  {
+                    delta: { content },
+                  },
+                ],
+              });
+              controller.enqueue(encoder.encode(`data: ${data}\n\n`));
+            },
+            onComplete: (fullContent) => {
+              controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+              controller.close();
+            },
+            onError: (error) => {
+              const errorData = JSON.stringify({
+                error: {
+                  message: error.message,
+                },
+              });
+              controller.enqueue(encoder.encode(`data: ${errorData}\n\n`));
+              controller.close();
+            },
+          });
+        } catch (error) {
+          const errorData = JSON.stringify({
+            error: {
+              message: error instanceof Error ? error.message : String(error),
+            },
+          });
+          controller.enqueue(encoder.encode(`data: ${errorData}\n\n`));
+          controller.close();
+        }
       },
-      body: JSON.stringify({ message }),
     });
 
-    if (!response.ok) {
-      const error = await response.json();
-      return NextResponse.json(error, { status: response.status });
-    }
-
-    const data = await response.json();
-    return NextResponse.json(data);
+    return new Response(stream, {
+      headers: {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        Connection: "keep-alive",
+      },
+    });
   } catch (error) {
-    console.error("API 路由错误:", error);
-    return NextResponse.json(
-      {
+    return new Response(
+      JSON.stringify({
         error: "处理请求时出错",
         message: error instanceof Error ? error.message : String(error),
-      },
-      { status: 500 }
+      }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      }
     );
   }
 }
