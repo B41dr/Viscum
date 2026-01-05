@@ -8,10 +8,7 @@ export async function POST(request: NextRequest) {
     const { message } = body;
 
     if (!message || typeof message !== "string") {
-      return NextResponse.json(
-        { error: "消息内容不能为空" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "消息内容不能为空" }, { status: 400 });
     }
 
     // 调用后端服务

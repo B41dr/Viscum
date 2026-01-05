@@ -37,4 +37,5 @@ export class DefaultFeedbackProcessor implements FeedbackProcessor {
   }
 }
 
-export const feedbackProcessor: FeedbackProcessor = new DefaultFeedbackProcessor();
+export const feedbackProcessor: FeedbackProcessor =
+  new DefaultFeedbackProcessor();

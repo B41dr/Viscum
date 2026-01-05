@@ -10,16 +10,15 @@
     "cli"
   ],
   "scripts": {
-    "dev": "turbo run dev",
-    "build": "turbo run build",
-    "lint": "turbo run lint",
-    "format": "turbo run format",
+    "s": "turbo run dev",
+    "b": "turbo run build",
+    "p": "./scripts/performance.sh",
+    "l": "turbo run lint",
+    "f": "turbo run format",
     "clean": "turbo run clean",
     "server": "bun run --filter @viscum/server dev",
     "web": "bun run --filter @viscum/web dev",
-    "cli": "bun run --filter @viscum/cli dev",
-    "s": "./start.sh",
-    "p": "./scripts/performance.sh"
+    "cli": "bun run --filter @viscum/cli dev"
   },
   "devDependencies": {
     "@types/bun": "^1.3.5",

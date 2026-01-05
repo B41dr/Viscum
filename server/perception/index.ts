@@ -40,7 +40,7 @@ export interface EmbeddingService {
  * 未来可以集成 embedding API
  */
 export class DefaultEmbeddingService implements EmbeddingService {
-  async embed(text: string | string[]): Promise<number[][]> {
+  async embed(_text: string | string[]): Promise<number[][]> {
     // TODO: 实现 embedding API 调用
     throw new Error("Embedding 服务未实现");
   }
