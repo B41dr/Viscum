@@ -3,8 +3,11 @@
  */
 
 import XMarkdown from "@ant-design/x-markdown";
-import { CodeHighlighter } from "@ant-design/x";
+import { CodeHighlighter, Mermaid } from "@ant-design/x";
 import { createStyles } from "antd-style";
+import { useState, useRef, useEffect } from "react";
+import { FullscreenOutlined, FullscreenExitOutlined } from "@ant-design/icons";
+import { Infographic } from "@antv/infographic";
 
 interface BubbleContentProps {
   content: any;
@@ -164,7 +167,228 @@ const useStyle = createStyles(({ token, css }) => ({
       font-style: italic;
     }
   `,
+  mermaidContainer: css`
+    position: relative;
+    margin: 12px 0;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid ${token.colorBorder};
+    background: ${token.colorBgContainer};
+
+    &:hover .mermaid-fullscreen-btn {
+      opacity: 1;
+    }
+  `,
+  mermaidFullscreenBtn: css`
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 10;
+    padding: 6px 8px;
+    background: ${token.colorBgContainer};
+    border: 1px solid ${token.colorBorder};
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition:
+      opacity 0.2s,
+      background 0.2s;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+    &:hover {
+      background: ${token.colorFillTertiary};
+      border-color: ${token.colorPrimary};
+    }
+
+    &:active {
+      transform: scale(0.95);
+    }
+  `,
+  mermaidFullscreenContainer: css`
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 9999;
+    background: ${token.colorBgContainer};
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    overflow: auto;
+  `,
+  mermaidFullscreenContent: css`
+    width: 100%;
+    max-width: 90vw;
+    height: 100%;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  `,
+  mermaidFullscreenHeader: css`
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+    padding: 12px;
+    margin-bottom: 20px;
+  `,
+  mermaidFullscreenBody: css`
+    flex: 1;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: auto;
+  `,
+  infographicContainer: css`
+    margin: 12px 0;
+    width: 100%;
+    min-height: 200px;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid ${token.colorBorder};
+    background: ${token.colorBgContainer};
+  `,
 }));
+
+/**
+ * Infographic 组件
+ */
+function ReactInfographic({ children }: { children: string }) {
+  const { styles } = useStyle();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const infographicInstance = useRef<Infographic | null>(null);
+
+  useEffect(() => {
+    if (containerRef.current) {
+      infographicInstance.current = new Infographic({
+        container: containerRef.current,
+      });
+    }
+
+    return () => {
+      infographicInstance.current?.destroy();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (infographicInstance.current && children) {
+      infographicInstance.current.render(children);
+    }
+  }, [children]);
+
+  return <div ref={containerRef} className={styles.infographicContainer} />;
+}
+
+/**
+ * Mermaid 全屏组件
+ */
+function MermaidWithFullscreen({ children }: { children: string }) {
+  const { styles } = useStyle();
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const fullscreenRef = useRef<HTMLDivElement>(null);
+
+  const enterFullscreen = () => {
+    if (fullscreenRef.current) {
+      if (fullscreenRef.current.requestFullscreen) {
+        fullscreenRef.current.requestFullscreen();
+      } else if ((fullscreenRef.current as any).webkitRequestFullscreen) {
+        (fullscreenRef.current as any).webkitRequestFullscreen();
+      } else if ((fullscreenRef.current as any).mozRequestFullScreen) {
+        (fullscreenRef.current as any).mozRequestFullScreen();
+      } else if ((fullscreenRef.current as any).msRequestFullscreen) {
+        (fullscreenRef.current as any).msRequestFullscreen();
+      }
+      setIsFullscreen(true);
+    }
+  };
+
+  const exitFullscreen = () => {
+    if (document.fullscreenElement) {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      } else if ((document as any).webkitExitFullscreen) {
+        (document as any).webkitExitFullscreen();
+      } else if ((document as any).mozCancelFullScreen) {
+        (document as any).mozCancelFullScreen();
+      } else if ((document as any).msExitFullscreen) {
+        (document as any).msExitFullscreen();
+      }
+    }
+    setIsFullscreen(false);
+  };
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      if (!document.fullscreenElement) {
+        setIsFullscreen(false);
+      }
+    };
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    document.addEventListener("webkitfullscreenchange", handleFullscreenChange);
+    document.addEventListener("mozfullscreenchange", handleFullscreenChange);
+    document.addEventListener("MSFullscreenChange", handleFullscreenChange);
+
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+      document.removeEventListener(
+        "webkitfullscreenchange",
+        handleFullscreenChange
+      );
+      document.removeEventListener(
+        "mozfullscreenchange",
+        handleFullscreenChange
+      );
+      document.removeEventListener(
+        "MSFullscreenChange",
+        handleFullscreenChange
+      );
+    };
+  }, []);
+
+  if (isFullscreen) {
+    return (
+      <div ref={fullscreenRef} className={styles.mermaidFullscreenContainer}>
+        <div className={styles.mermaidFullscreenContent}>
+          <div className={styles.mermaidFullscreenHeader}>
+            <button
+              onClick={exitFullscreen}
+              className={styles.mermaidFullscreenBtn}
+              style={{ position: "relative", opacity: 1 }}
+            >
+              <FullscreenExitOutlined />
+            </button>
+          </div>
+          <div className={styles.mermaidFullscreenBody}>
+            <Mermaid>{children}</Mermaid>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div ref={containerRef} className={styles.mermaidContainer}>
+      <button
+        onClick={enterFullscreen}
+        className={`${styles.mermaidFullscreenBtn} mermaid-fullscreen-btn`}
+        title="全屏查看"
+      >
+        <FullscreenOutlined />
+      </button>
+      <Mermaid>{children}</Mermaid>
+    </div>
+  );
+}
 
 export function BubbleContent({
   content,
@@ -200,11 +424,22 @@ export function BubbleContent({
                 return null;
               }
 
+              // 如果是 mermaid 图表，使用带全屏功能的 Mermaid 组件渲染
+              if (lang === "mermaid") {
+                return (
+                  <MermaidWithFullscreen>{children}</MermaidWithFullscreen>
+                );
+              }
+
+              // 如果是 infographic 图表，使用 Infographic 组件渲染
+              if (lang === "infographic") {
+                return <ReactInfographic>{children}</ReactInfographic>;
+              }
+
+              // 其他代码块使用 CodeHighlighter
               return <CodeHighlighter lang={lang}>{children}</CodeHighlighter>;
             }
 
-            // 行内代码使用普通的 code 标签
-            // 过滤掉不应该传递到 DOM 的 props
             const { domNode, streamStatus, block, ...domProps } = props;
             return <code {...domProps} />;
           },
