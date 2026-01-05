@@ -1,8 +1,7 @@
 import { StateGraph, END, START } from "@langchain/langgraph";
-import { ChatOpenAI } from "@langchain/openai";
 import { AgentState } from "../memory";
 import { Node } from "./node";
-import { initEnvironment } from "../environment";
+import { LLMAdapter } from "../utils/llm-adapter";
 
 /**
  * Agent 工作流
@@ -17,15 +16,13 @@ export class AgentWorkflow {
     stream: (state: typeof AgentState.State) => any;
   };
 
-  constructor(llm: ChatOpenAI) {
-    initEnvironment();
+  constructor(llm: LLMAdapter) {
     this.agentNode = new Node(llm);
     this.compiledWorkflow = this.buildWorkflow();
   }
 
   /**
    * 构建工作流图
-   * 简化后的工作流：Agent 循环执行，直到没有工具调用
    */
   private buildWorkflow() {
     const workflow = new StateGraph(AgentState)
@@ -34,7 +31,6 @@ export class AgentWorkflow {
       .addConditionalEdges(
         "agent" as any,
         (state: typeof AgentState.State) => {
-          // 如果有工具结果需要处理，继续循环让 LLM 处理结果；否则结束
           if (state.toolResults && state.toolResults.length > 0) {
             return "continue";
           }

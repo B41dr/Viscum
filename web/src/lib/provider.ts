@@ -1,8 +1,3 @@
-/**
- * 聊天 Provider
- * 基于 @ant-design/x-sdk 的聊天提供者实现
- */
-
 import {
   XModelMessage,
   XModelParams,
@@ -12,26 +7,87 @@ import {
   type TransformMessage,
   type XRequestOptions,
 } from "@ant-design/x-sdk";
-import { parseSSEChunk, extractContentFromChunk } from "./sse-parser";
-import { SYSTEM_MESSAGE } from "./config";
+
+export interface SSEChunk {
+  data?: string;
+  [key: string]: any;
+}
+
+export interface ParsedSSEChunk {
+  choices?: Array<{
+    delta?: { content?: string };
+    message?: { role?: string; content?: string };
+  }>;
+  error?: { message?: string };
+}
+
+/**
+ * 解析 SSE 数据块
+ */
+function parseSSEChunk(chunk: any): ParsedSSEChunk | null {
+  // 如果 chunk 是 SSEOutput 格式（包含 data 字段），需要解析 data 字段中的 JSON
+  if (
+    typeof chunk === "object" &&
+    "data" in chunk &&
+    typeof chunk.data === "string"
+  ) {
+    // 跳过 [DONE] 信号
+    if (chunk.data === "[DONE]") {
+      return null;
+    }
+
+    try {
+      return JSON.parse(chunk.data);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // 如果已经是对象，直接返回
+  if (chunk && typeof chunk === "object") {
+    return chunk;
+  }
+
+  return null;
+}
+
+/**
+ * 从解析后的 SSE chunk 中提取内容
+ */
+function extractContentFromChunk(parsed: ParsedSSEChunk): string | null {
+  if (!parsed || !parsed.choices || !Array.isArray(parsed.choices)) {
+    return null;
+  }
+
+  const choice = parsed.choices[0];
+  if (!choice) {
+    return null;
+  }
+
+  // 优先使用 message.content（完整消息）
+  if (choice.message?.content) {
+    return choice.message.content;
+  }
+
+  // 否则使用 delta.content（增量内容）
+  if (choice.delta?.content) {
+    return choice.delta.content;
+  }
+
+  return null;
+}
 
 export class CustomChatProvider extends AbstractChatProvider<
   XModelMessage,
   XModelParams,
   XModelResponse
 > {
-  private systemMessage: string;
-
-  constructor(systemMessage?: string) {
+  constructor() {
     super({
       request: XRequest<XModelParams, XModelResponse>("/api/chat", {
         manual: true,
-        // 流式响应由 SDK 自动处理 SSE 格式
       }),
     });
-    // 优先使用传入的系统提示词，否则使用环境变量或默认值
-    this.systemMessage =
-      systemMessage || (typeof window !== "undefined" ? SYSTEM_MESSAGE : "");
   }
 
   transformParams(
@@ -42,24 +98,11 @@ export class CustomChatProvider extends AbstractChatProvider<
       throw new Error("消息不能为空");
     }
 
-    // 构建消息列表
     const messages = requestParams.messages.map((m) => ({
       role: m.role,
       content: m.content,
     }));
 
-    // 如果有系统提示词，且第一条消息不是 system 消息，则在开头添加
-    if (this.systemMessage) {
-      const hasSystemMessage = messages.some((m) => m.role === "system");
-      if (!hasSystemMessage) {
-        messages.unshift({
-          role: "system",
-          content: this.systemMessage,
-        });
-      }
-    }
-
-    // 合并默认参数和请求参数
     return {
       ...(options?.params || {}),
       ...requestParams,
@@ -70,11 +113,14 @@ export class CustomChatProvider extends AbstractChatProvider<
   transformLocalMessage(
     requestParams: Partial<XModelParams>
   ): XModelMessage | XModelMessage[] {
-    if (!requestParams || !requestParams.messages || requestParams.messages.length === 0) {
+    if (
+      !requestParams ||
+      !requestParams.messages ||
+      requestParams.messages.length === 0
+    ) {
       throw new Error("消息不能为空");
     }
 
-    // 返回用户消息（最后一条）
     const lastMessage =
       requestParams.messages[requestParams.messages.length - 1];
     return {
@@ -88,7 +134,6 @@ export class CustomChatProvider extends AbstractChatProvider<
   ): XModelMessage {
     const { chunk, chunks, originMessage } = info;
 
-    // 处理流式响应：累积所有 chunks 的内容
     if (Array.isArray(chunks) && chunks.length > 0) {
       let accumulatedContent = "";
       for (const c of chunks) {
@@ -99,7 +144,6 @@ export class CustomChatProvider extends AbstractChatProvider<
 
         const content = extractContentFromChunk(parsed);
         if (content) {
-          // 如果是完整消息，替换；如果是增量，追加
           if (parsed.choices?.[0]?.message?.content) {
             accumulatedContent = content;
           } else {
@@ -113,7 +157,6 @@ export class CustomChatProvider extends AbstractChatProvider<
       };
     }
 
-    // 如果有单个 chunk
     if (chunk) {
       const parsed = parseSSEChunk(chunk);
       if (!parsed) {

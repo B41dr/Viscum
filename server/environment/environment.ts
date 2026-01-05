@@ -1,6 +1,6 @@
 import { readFileSync } from "fs";
-import { join } from "path";
 import { logger } from "../utils";
+import path from "path";
 
 /**
  * 环境配置类
@@ -9,31 +9,14 @@ import { logger } from "../utils";
 export class Environment {
   private static instance: Environment | null = null;
 
-  private promptCache: Map<string, string> = new Map();
   private contextData: Map<string, any> = new Map();
-  private promptDir: string;
-
-  private constructor(promptDir?: string) {
-    // 默认使用当前目录作为 prompt 文件目录
-    this.promptDir = promptDir || __dirname;
-  }
-
-  /**
-   * 初始化环境实例
-   * @param promptDir prompt 文件目录（可选）
-   */
-  static init(promptDir?: string): void {
-    Environment.instance = new Environment(promptDir);
-  }
+  private promptDir: string | null = null;
 
   /**
    * 获取环境实例
    */
   static getInstance(): Environment {
-    if (!Environment.instance) {
-      Environment.instance = new Environment();
-    }
-    return Environment.instance;
+    return (Environment.instance ??= new Environment());
   }
 
   /**
@@ -42,19 +25,15 @@ export class Environment {
    * @returns prompt 内容
    */
   loadPrompt(filename: string): string | undefined {
-    // 检查缓存
-    if (this.promptCache.has(filename)) {
-      return this.promptCache.get(filename);
-    }
-
-    const promptPath = join(this.promptDir, `${filename}.md`);
+    const promptPath = path.join(
+      path.join(path.dirname(process.cwd()), "server", "environment"),
+      `${filename}.md`
+    );
     try {
       const content = readFileSync(promptPath, "utf-8");
-      const trimmedContent = content.trim();
-      this.promptCache.set(filename, trimmedContent);
-      return trimmedContent;
+      return content.trim();
     } catch (error) {
-      logger.error(`无法读取 prompt 文件: ${filename}.md`, { error });
+      logger.error(`无法读取 prompt 文件: ${filename}.md`, error);
     }
   }
 
@@ -107,17 +86,9 @@ export class Environment {
   }
 
   /**
-   * 清除 prompt 缓存
-   */
-  clearPromptCache(): void {
-    this.promptCache.clear();
-  }
-
-  /**
    * 清除所有缓存和上下文
    */
   reset(): void {
-    this.clearPromptCache();
     this.clearContext();
   }
 
@@ -127,12 +98,4 @@ export class Environment {
   getContextKeys(): string[] {
     return Array.from(this.contextData.keys());
   }
-}
-
-/**
- * 初始化环境配置
- * @param promptDir prompt 文件目录（可选）
- */
-export function initEnvironment(promptDir?: string): void {
-  Environment.init(promptDir);
 }

@@ -121,7 +121,6 @@ class CodeChunker:
         """查找代码文件"""
         for item in root.rglob('*'):
             # 跳过排除的目录和文件
-            # 使用路径部分完全匹配，避免 'env' 匹配 'environment' 这样的误匹配
             item_parts = item.parts
             should_exclude = False
 
@@ -133,7 +132,6 @@ class CodeChunker:
                         break
                 else:
                     # 对于目录/文件名，检查路径部分是否完全匹配
-                    # 例如 'env' 应该匹配 '/path/to/env/file' 但不匹配 '/path/to/environment/file'
                     if exclude in item_parts:
                         should_exclude = True
                         break

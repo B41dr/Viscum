@@ -3,6 +3,19 @@
   "version": "0.0.1",
   "type": "module",
   "private": true,
+  "main": "./index.ts",
+  "exports": {
+    ".": "./index.ts",
+    "./planning": "./planning/index.ts",
+    "./memory": "./memory/index.ts",
+    "./utils": "./utils/index.ts",
+    "./tools": "./tools/index.ts",
+    "./exec": "./exec/index.ts",
+    "./action": "./action/index.ts",
+    "./environment": "./environment/index.ts",
+    "./perception": "./perception/index.ts",
+    "./feedback": "./feedback/index.ts"
+  },
   "scripts": {
     "dev": "bun run index.ts",
     "start": "bun run index.ts",

@@ -1,5 +1,5 @@
-import { ChatOpenAI, type ChatOpenAIFields } from "@langchain/openai";
 import { logger } from "./logger";
+import { LLMAdapter } from "./llm-adapter";
 
 export interface AppConfig {
   apiKey: string;
@@ -74,18 +74,13 @@ export function loadConfig(): AppConfig {
   };
 }
 
-export function createLLMClient(config?: AppConfig): ChatOpenAI {
+export function createLLMClient(config?: AppConfig): LLMAdapter {
   const appConfig = config || loadConfig();
 
-  const llmConfig: ChatOpenAIFields = {
-    modelName: appConfig.modelName,
+  return new LLMAdapter({
+    baseUrl: appConfig.baseURL,
+    apiKey: appConfig.apiKey,
+    model: appConfig.modelName,
     temperature: appConfig.temperature,
-    openAIApiKey: appConfig.apiKey,
-    streaming: appConfig.streaming,
-    configuration: {
-      baseURL: appConfig.baseURL,
-    },
-  };
-
-  return new ChatOpenAI(llmConfig);
+  });
 }

@@ -8,7 +8,6 @@
 .
 ├── server/              # @viscum/server - AI Agent 服务器
 ├── web/                 # @viscum/web - Next.js 前端应用
-├── cli/                 # @viscum/cli - CLI 命令行工具
 ├── services/            # 需要单独部署的服务
 │   └── embedding/       # Embedding 服务（Python FastAPI）
 └── package.json         # 根 workspace 配置
@@ -51,11 +50,6 @@ bun run --filter @viscum/server dev
 bun run web
 # 或
 bun run --filter @viscum/web dev
-
-# 运行 cli
-bun run cli
-# 或
-bun run --filter @viscum/cli dev
 ```
 
 ### 其他命令
@@ -67,7 +61,6 @@ bun run clean
 # 在特定 workspace 中运行命令
 bun run --filter @viscum/server <command>
 bun run --filter @viscum/web <command>
-bun run --filter @viscum/cli <command>
 ```
 
 ## Turborepo 特性
@@ -91,13 +84,6 @@ Next.js 前端应用。
 
 - 入口: `web/src/app/page.tsx`
 - 开发: `bun run web` 或 `bun run --filter @viscum/web dev`
-
-### @viscum/cli
-
-CLI 命令行工具，用于交互式对话。
-
-- 入口: `cli/main.ts`
-- 开发: `bun run cli` 或 `bun run --filter @viscum/cli dev`
 
 ## 服务说明
 

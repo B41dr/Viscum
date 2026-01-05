@@ -9,7 +9,7 @@
     "turbo": "^2.3.0",
     "typescript": "^5.0.0"
   },
-  "description": "Multi-agent AI system with Turborepo",
+  "description": "viscum",
   "engines": {
     "bun": ">=1.0.0"
   },
@@ -23,13 +23,11 @@
     "f": "turbo run format",
     "clean": "turbo run clean",
     "server": "cd server && bun run dev",
-    "web": "cd web && bun run dev",
-    "cli": "cd cli && bun run dev"
+    "web": "cd web && bun run dev"
   },
   "type": "module",
   "workspaces": [
     "server",
-    "web",
-    "cli"
+    "web"
   ]
 }

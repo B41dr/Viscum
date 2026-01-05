@@ -1,4 +1,3 @@
-import { ChatOpenAI } from "@langchain/openai";
 import {
   AIMessage,
   ToolMessage,
@@ -11,20 +10,21 @@ import { logger } from "../utils";
 import { Environment } from "../environment";
 import { MessageFormatter, ToolCallProcessor } from "../action";
 import { ToolExecutor } from "../exec";
+import { LLMAdapter } from "../utils/llm-adapter";
 
 /**
  * Agent 节点
  * 负责协调和决策，决定是否需要调用工具，并执行工具调用
  */
 export class Node {
-  private llm: ChatOpenAI;
+  private llm: LLMAdapter;
   private environment: Environment;
   private messageFormatter: MessageFormatter;
   private toolCallProcessor: ToolCallProcessor;
   private toolExecutor: ToolExecutor;
   private systemPrompt: string | undefined;
 
-  constructor(llm: ChatOpenAI) {
+  constructor(llm: LLMAdapter) {
     this.llm = llm;
     this.environment = Environment.getInstance();
     this.messageFormatter = new MessageFormatter();

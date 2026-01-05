@@ -208,10 +208,6 @@ TOTAL_BYTES=$((TOTAL_BYTES + WEB_SIZE_KB * 1024))
 SERVER_SIZE_KB=$(calculate_dir_size "server" "node_modules" "logs")
 TOTAL_BYTES=$((TOTAL_BYTES + SERVER_SIZE_KB * 1024))
 
-# CLI 项目
-CLI_SIZE_KB=$(calculate_dir_size "cli" "node_modules" "logs")
-TOTAL_BYTES=$((TOTAL_BYTES + CLI_SIZE_KB * 1024))
-
 # Services 项目
 SERVICES_SIZE_KB=$(calculate_dir_size "services" "node_modules")
 TOTAL_BYTES=$((TOTAL_BYTES + SERVICES_SIZE_KB * 1024))
@@ -233,7 +229,6 @@ echo -e "  ${CYAN}主要代码目录:${NC}"
 # 统计各个工作空间
 stat_code_dir "server" "server/"
 stat_code_dir "web/src" "web/src/"
-stat_code_dir "cli" "cli/"
 stat_code_dir "services/embedding" "services/embedding/"
 
 # ============================================================================
@@ -278,13 +273,7 @@ if [ -d "web" ]; then
 fi
 
 # ============================================================================
-# 4. CLI 项目统计
-# ============================================================================
-
-stat_ts_project "cli" "🛠️  CLI 项目统计 (cli/)"
-
-# ============================================================================
-# 5. Services 项目统计
+# 4. Services 项目统计
 # ============================================================================
 
 stat_python_project "services/embedding" "🐍 Embedding 服务统计 (services/embedding/)"
@@ -299,7 +288,6 @@ print_title "📦 项目组成"
 print_section "主要目录"
 [ -d "server" ] && echo -e "    ${CYAN}server/${NC}              ${GREEN}$(format_size $((SERVER_SIZE_KB * 1024)))${NC}"
 [ -d "web" ] && echo -e "    ${CYAN}web/${NC}                ${GREEN}$(format_size $((WEB_SIZE_KB * 1024)))${NC}"
-[ -d "cli" ] && echo -e "    ${CYAN}cli/${NC}                ${GREEN}$(format_size $((CLI_SIZE_KB * 1024)))${NC}"
 [ -d "services/embedding" ] && echo -e "    ${CYAN}services/embedding/${NC}  ${GREEN}$(du -sh services/embedding 2>/dev/null | awk '{print $1}')${NC}"
 [ -d "scripts" ] && echo -e "    ${CYAN}scripts/${NC}             ${GREEN}$(du -sh scripts 2>/dev/null | awk '{print $1}')${NC}"
 
@@ -323,7 +311,6 @@ fi
 print_section "子项目"
 [ -f "server/package.json" ] && echo -e "    ${CYAN}server/package.json${NC}     ${GREEN}✓${NC}"
 [ -f "web/package.json" ] && echo -e "    ${CYAN}web/package.json${NC}         ${GREEN}✓${NC}"
-[ -f "cli/package.json" ] && echo -e "    ${CYAN}cli/package.json${NC}         ${GREEN}✓${NC}"
 [ -f "services/embedding/requirements.txt" ] && echo -e "    ${CYAN}services/embedding/requirements.txt${NC}  ${GREEN}✓${NC}"
 
 # ============================================================================
@@ -352,15 +339,6 @@ if [ -d "web/src" ]; then
   WEB_FILES=$(find web/src -type f ! -path "*/node_modules/*" ! -path "*/.next/*" 2>/dev/null | wc -l | tr -d ' ')
   TOTAL_LINES=$((TOTAL_LINES + WEB_LINES))
   TOTAL_FILES=$((TOTAL_FILES + WEB_FILES))
-fi
-
-# CLI 代码行数
-if [ -d "cli" ]; then
-  CLI_LINES=$(find cli -type f \( -name "*.ts" -o -name "*.tsx" \) ! -path "*/node_modules/*" ! -path "*/logs/*" -exec wc -l {} + 2>/dev/null | tail -1 | awk '{print $1}')
-  [ -z "$CLI_LINES" ] && CLI_LINES=0
-  CLI_FILES=$(find cli -type f \( -name "*.ts" -o -name "*.tsx" \) ! -path "*/node_modules/*" ! -path "*/logs/*" 2>/dev/null | wc -l | tr -d ' ')
-  TOTAL_LINES=$((TOTAL_LINES + CLI_LINES))
-  TOTAL_FILES=$((TOTAL_FILES + CLI_FILES))
 fi
 
 # Python 代码行数
