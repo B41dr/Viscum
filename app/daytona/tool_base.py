@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, ClassVar, Dict, Optional
 
-from daytona import Daytona, DaytonaConfig, Sandbox, SandboxState
+from daytona_sdk import Daytona, DaytonaConfig, Sandbox, SandboxState
 from pydantic import Field
 
 from app.config import config

@@ -716,7 +716,6 @@ class LLM:
                 "messages": messages,
                 "tools": tools,
                 "tool_choice": tool_choice,
-                "timeout": timeout,
                 **kwargs,
             }
 
@@ -730,7 +729,8 @@ class LLM:
 
             params["stream"] = False  # Always use non-streaming for tool requests
             response: ChatCompletion = await self.client.chat.completions.create(
-                **params
+                **params,
+                timeout=timeout  # timeout should be a client parameter, not an API parameter
             )
 
             # Check if response is valid

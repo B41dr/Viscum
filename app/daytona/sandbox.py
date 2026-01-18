@@ -1,6 +1,6 @@
 import time
 
-from daytona import (
+from daytona_sdk import (
     CreateSandboxFromImageParams,
     Daytona,
     DaytonaConfig,

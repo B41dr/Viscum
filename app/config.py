@@ -1,9 +1,9 @@
 import json
 import threading
-import tomllib
 from pathlib import Path
 from typing import Dict, List, Optional
 
+import tomllib
 from pydantic import BaseModel, Field
 
 
@@ -106,7 +106,7 @@ class SandboxSettings(BaseModel):
 
 
 class DaytonaSettings(BaseModel):
-    daytona_api_key: str
+    daytona_api_key: Optional[str] = None
     daytona_server_url: Optional[str] = Field(
         "https://app.daytona.io/api", description=""
     )

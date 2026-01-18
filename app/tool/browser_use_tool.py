@@ -15,7 +15,6 @@ from app.llm import LLM
 from app.tool.base import BaseTool, ToolResult
 from app.tool.web_search import WebSearch
 
-
 _BROWSER_DESCRIPTION = """\
 A powerful browser automation tool that allows interaction with web pages through various actions.
 * This tool provides commands for controlling a browser session, navigating web pages, and extracting information
@@ -383,14 +382,21 @@ class BrowserUseTool(BaseTool, Generic[Context]):
 
                     content = markdownify.markdownify(await page.content())
 
-                    prompt = f"""\
-Your task is to extract the content of the page. You will be given a page and a goal, and you should extract all relevant information around this goal from the page. If the goal is vague, summarize the page. Respond in json format.
+                    # Create messages with both system and user roles for API compatibility
+                    system_prompt = "You are a helpful assistant that extracts information from web pages. Respond in JSON format using the provided function schema."
+
+                    user_prompt = f"""\
+Please extract the content of the page based on the following goal and page content.
+
 Extraction goal: {goal}
 
 Page content:
 {content[:max_content_length]}
 """
-                    messages = [{"role": "system", "content": prompt}]
+                    messages = [
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_prompt},
+                    ]
 
                     # Define extraction function schema
                     extraction_function = {
