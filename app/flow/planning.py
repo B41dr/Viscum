@@ -277,13 +277,14 @@ class PlanningFlow(BaseFlow):
     async def _execute_step(self, executor: BaseAgent, step_info: dict) -> str:
         """Execute the current step with the specified agent using agent.run()."""
         # Prepare context for the agent with current plan status
-        plan_status = await self._get_plan_text()
+        # Only include summary and current step to reduce token usage
+        plan_summary = await self._get_plan_summary()
         step_text = step_info.get("text", f"Step {self.current_step_index}")
 
         # Create a prompt for the agent to execute the current step
         step_prompt = f"""
-        CURRENT PLAN STATUS:
-        {plan_status}
+        PLAN SUMMARY:
+        {plan_summary}
 
         YOUR CURRENT TASK:
         You are now working on step {self.current_step_index}: "{step_text}"
@@ -344,6 +345,62 @@ class PlanningFlow(BaseFlow):
         except Exception as e:
             logger.error(f"Error getting plan: {e}")
             return self._generate_plan_text_from_storage()
+
+    async def _get_plan_summary(self) -> str:
+        """Get a concise summary of the plan to reduce token usage.
+        
+        Only includes:
+        - Plan title and progress
+        - Current step details
+        - Recently completed steps (last 2-3)
+        """
+        try:
+            if self.active_plan_id not in self.planning_tool.plans:
+                return f"Plan {self.active_plan_id} not found"
+            
+            plan_data = self.planning_tool.plans[self.active_plan_id]
+            title = plan_data.get("title", "Untitled Plan")
+            steps = plan_data.get("steps", [])
+            step_statuses = plan_data.get("step_statuses", [])
+            
+            # Ensure step_statuses matches steps
+            while len(step_statuses) < len(steps):
+                step_statuses.append(PlanStepStatus.NOT_STARTED.value)
+            
+            # Count progress
+            completed = sum(1 for s in step_statuses if s == PlanStepStatus.COMPLETED.value)
+            total = len(steps)
+            progress = (completed / total) * 100 if total > 0 else 0
+            
+            summary = f"Plan: {title}\nProgress: {completed}/{total} ({progress:.1f}%)\n\n"
+            
+            # Only include current step and recent completed steps
+            status_marks = PlanStepStatus.get_status_marks()
+            current_idx = self.current_step_index
+            
+            # Show current step
+            if current_idx is not None and current_idx < len(steps):
+                status = step_statuses[current_idx]
+                mark = status_marks.get(status, "[ ]")
+                summary += f"Current: {mark} Step {current_idx}: {steps[current_idx]}\n"
+            
+            # Show last 2-3 completed steps for context
+            completed_steps = [
+                (i, steps[i]) 
+                for i in range(len(steps)) 
+                if i < len(step_statuses) and step_statuses[i] == PlanStepStatus.COMPLETED.value
+            ]
+            if completed_steps:
+                recent_completed = completed_steps[-3:]  # Last 3 completed
+                if recent_completed:
+                    summary += "\nRecently completed:\n"
+                    for i, step_text in recent_completed:
+                        summary += f"  {i}. [✓] {step_text}\n"
+            
+            return summary
+        except Exception as e:
+            logger.error(f"Error generating plan summary: {e}")
+            return await self._get_plan_text()  # Fallback to full text
 
     def _generate_plan_text_from_storage(self) -> str:
         """Generate plan text directly from storage if the planning tool fails."""
