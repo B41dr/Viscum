@@ -42,6 +42,34 @@ class ToolCallAgent(ReActAgent):
             user_msg = Message.user_message(self.next_step_prompt)
             self.messages += [user_msg]
 
+        # Check if context compression is needed before calling LLM
+        try:
+            # Estimate tokens for the upcoming request
+            system_msgs = (
+                [Message.system_message(self.system_prompt)]
+                if self.system_prompt
+                else None
+            ) or []
+            all_messages = system_msgs + self.messages
+            estimated_tokens = self.llm.count_message_tokens(
+                [msg.to_dict() for msg in all_messages]
+            )
+            # Add tokens for tools
+            tools = self.available_tools.to_params()
+            if tools:
+                for tool in tools:
+                    estimated_tokens += self.llm.count_tokens(str(tool))
+
+            # Check if compression is needed
+            if self.llm.max_input_tokens:
+                # Try to compress if approaching limit
+                await self.compress_context_if_needed(
+                    estimated_tokens=estimated_tokens,
+                    max_tokens=self.llm.max_input_tokens,
+                )
+        except Exception as e:
+            logger.warning(f"⚠️ Context compression check failed: {e}")
+
         try:
             # Get response with tool options
             response = await self.llm.ask_tool(

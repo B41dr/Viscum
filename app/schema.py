@@ -159,6 +159,17 @@ class Message(BaseModel):
 class Memory(BaseModel):
     messages: List[Message] = Field(default_factory=list)
     max_messages: int = Field(default=100)
+    # Context compression settings
+    enable_compression: bool = Field(default=True, description="Enable context compression")
+    keep_recent_messages: int = Field(
+        default=10, description="Number of recent messages to keep when compressing"
+    )
+    compression_threshold: float = Field(
+        default=0.8, description="Compress when token usage exceeds this ratio (0.0-1.0)"
+    )
+    summary_message: Optional[Message] = Field(
+        default=None, description="Summary of compressed messages"
+    )
 
     def add_message(self, message: Message) -> None:
         """Add a message to memory"""
@@ -177,10 +188,43 @@ class Memory(BaseModel):
     def clear(self) -> None:
         """Clear all messages"""
         self.messages.clear()
+        self.summary_message = None
 
     def get_recent_messages(self, n: int) -> List[Message]:
         """Get n most recent messages"""
         return self.messages[-n:]
+
+    def get_system_messages(self) -> List[Message]:
+        """Get all system messages"""
+        return [msg for msg in self.messages if msg.role == "system"]
+
+    def get_compressible_messages(self, keep_recent: Optional[int] = None) -> List[Message]:
+        """Get messages that can be compressed (excluding system and recent messages)
+        
+        Args:
+            keep_recent: Number of recent messages to keep (defaults to self.keep_recent_messages)
+            
+        Returns:
+            List of messages that can be compressed
+        """
+        keep_recent = keep_recent or self.keep_recent_messages
+        
+        # Get indices to exclude
+        system_indices = set()
+        recent_start_idx = max(0, len(self.messages) - keep_recent)
+        
+        # Find system message indices
+        for i, msg in enumerate(self.messages):
+            if msg.role == "system":
+                system_indices.add(i)
+        
+        # Messages to compress: all messages except system and recent ones
+        compressible = []
+        for i, msg in enumerate(self.messages):
+            if i not in system_indices and i < recent_start_idx:
+                compressible.append(msg)
+        
+        return compressible
 
     def to_dict_list(self) -> List[dict]:
         """Convert messages to list of dicts"""
