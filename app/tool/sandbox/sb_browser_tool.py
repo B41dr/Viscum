@@ -12,9 +12,8 @@ from app.daytona.tool_base import (  # Ensure Sandbox is imported correctly
     SandboxToolsBase,
     ThreadMessage,
 )
+from app.logger import logger
 from app.tool.base import ToolResult
-from app.utils.logger import logger
-
 
 # Context = TypeVar("Context")
 _BROWSER_DESCRIPTION = """\

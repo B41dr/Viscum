@@ -4,9 +4,8 @@ from typing import Any, Dict, Optional, TypeVar
 from uuid import uuid4
 
 from app.daytona.tool_base import Sandbox, SandboxToolsBase
+from app.logger import logger
 from app.tool.base import ToolResult
-from app.utils.logger import logger
-
 
 Context = TypeVar("Context")
 _SHELL_DESCRIPTION = """\

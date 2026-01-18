@@ -4,8 +4,7 @@ from typing import Any, Dict, Optional, Union
 
 from pydantic import BaseModel, Field
 
-from app.utils.logger import logger
-
+from app.logger import logger
 
 # class BaseTool(ABC, BaseModel):
 #     name: str
