@@ -13,15 +13,18 @@ from app.tool.browser_use_tool import BrowserUseTool
 from app.tool.mcp import MCPClients, MCPClientTool
 from app.tool.python_execute import PythonExecute
 from app.tool.str_replace_editor import StrReplaceEditor
+from app.utils.runtime_info import format_system_prompt, get_runtime_info
 
 
 class Manus(ToolCallAgent):
     """A versatile general-purpose agent with support for both local and MCP tools."""
 
     name: str = "Manus"
-    description: str = "A versatile agent that can solve various tasks using multiple tools including MCP-based tools"
+    description: str = (
+        "A versatile agent that can solve various tasks using multiple tools including MCP-based tools"
+    )
 
-    system_prompt: str = SYSTEM_PROMPT.format(directory=config.workspace_root)
+    system_prompt: str = SYSTEM_PROMPT
     next_step_prompt: str = NEXT_STEP_PROMPT
 
     max_observe: int = 10000
@@ -49,6 +52,19 @@ class Manus(ToolCallAgent):
         default_factory=dict
     )  # server_id -> url/command
     _initialized: bool = False
+
+    def get_formatted_system_prompt(self) -> Optional[str]:
+        """获取格式化后的系统提示词，注入运行时信息和目录信息
+
+        Returns:
+            Optional[str]: 格式化后的系统提示词，如果原始提示词为 None 则返回 None
+        """
+        if not self.system_prompt:
+            return None
+        # 获取运行时信息并添加 directory 信息，一次性格式化所有占位符
+        runtime_info = get_runtime_info()
+        runtime_info["directory"] = str(config.workspace_root)
+        return format_system_prompt(self.system_prompt, runtime_info)
 
     @model_validator(mode="after")
     def initialize_helper(self) -> "Manus":

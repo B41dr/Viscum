@@ -10,6 +10,7 @@ from app.logger import logger
 from app.prompt.toolcall import NEXT_STEP_PROMPT, SYSTEM_PROMPT
 from app.schema import TOOL_CHOICE_TYPE, AgentState, Message, ToolCall, ToolChoice
 from app.tool import CreateChatCompletion, Terminate, ToolCollection
+from app.utils.runtime_info import format_system_prompt
 
 
 TOOL_CALL_REQUIRED = "Tool calls required but none provided"
@@ -36,18 +37,31 @@ class ToolCallAgent(ReActAgent):
     max_steps: int = 30
     max_observe: Optional[Union[int, bool]] = None
 
+    def get_formatted_system_prompt(self) -> Optional[str]:
+        """获取格式化后的系统提示词，注入运行时信息
+        
+        Returns:
+            Optional[str]: 格式化后的系统提示词，如果原始提示词为 None 则返回 None
+        """
+        if not self.system_prompt:
+            return None
+        return format_system_prompt(self.system_prompt)
+
     async def think(self) -> bool:
         """Process current state and decide next actions using tools"""
         if self.next_step_prompt:
             user_msg = Message.user_message(self.next_step_prompt)
             self.messages += [user_msg]
 
+        # Format system prompt with runtime info
+        formatted_system_prompt = self.get_formatted_system_prompt()
+
         # Check if context compression is needed before calling LLM
         try:
             # Estimate tokens for the upcoming request
             system_msgs = (
-                [Message.system_message(self.system_prompt)]
-                if self.system_prompt
+                [Message.system_message(formatted_system_prompt)]
+                if formatted_system_prompt
                 else None
             ) or []
             all_messages = system_msgs + self.messages
@@ -75,8 +89,8 @@ class ToolCallAgent(ReActAgent):
             response = await self.llm.ask_tool(
                 messages=self.messages,
                 system_msgs=(
-                    [Message.system_message(self.system_prompt)]
-                    if self.system_prompt
+                    [Message.system_message(formatted_system_prompt)]
+                    if formatted_system_prompt
                     else None
                 ),
                 tools=self.available_tools.to_params(),

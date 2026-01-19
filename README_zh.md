@@ -1,7 +1,3 @@
-<p align="center">
-  <img src="assets/logo.jpg" width="200"/>
-</p>
-
 [English](README.md) | 中文 | [한국어](README_ko.md) | [日本語](README_ja.md)
 
 [![GitHub stars](https://img.shields.io/github/stars/FoundationAgents/OpenManus?style=social)](https://github.com/FoundationAgents/OpenManus/stargazers)
@@ -160,10 +156,6 @@ use_data_analysis_agent = true     # 默认关闭，将其改为true则为激活
 ## 交流群
 
 加入我们的飞书交流群，与其他开发者分享经验！
-
-<div align="center" style="display: flex; gap: 20px;">
-    <img src="assets/community_group.jpg" alt="OpenManus 交流群" width="300" />
-</div>
 
 ## Star 数量
 
